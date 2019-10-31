@@ -1,0 +1,109 @@
+body {
+  background-color: #293A88;
+}
+* {
+  font-family: 'Montserrat', sans-serif;
+}
+#app {
+  text-align: center;
+}
+#config {
+  width: 1000px;
+  margin: auto;
+  text-align: left;
+  button {
+    padding: 5px;
+    border-radius: 5px;
+  }
+  h1 {
+    text-align: center;
+  }
+  .player {
+    width: 100%;
+    padding: 10px;
+    input, select, option{
+      border-radius: 5px;
+      padding: 5px;
+    }
+    select {
+      float: right;
+    }
+    .delete {
+      float: right;
+      padding: 5px;
+      margin-left: 5px;
+      border-radius: 5px;
+      color: crimson;
+      background-color: white;
+      display: inline-block;
+    }
+  }
+}
+#board {
+  position: relative;
+  display: inline-block;
+  .cell {
+    width: 50px;
+    height: 50px;
+    border: 1px solid black;
+    box-sizing: border-box;
+  }
+  .player {
+    position: absolute;
+    height: 50px;
+    width: 50px;
+    background-repeat-y: no-repeat;
+  }
+  .onturn {
+    background-color: rgba(86,184,255,0.49);
+  }
+  .selected {
+    background-color: rgba(255,21,29,0.79) !important;
+  }
+  #Cursor {
+    position: absolute;
+    height: 50px;
+    width: 50px;
+    background-color: rgba(247,255,113,0.48);
+  }
+  .row {
+    display: flex;
+  }
+}
+
+#Modal {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.48);
+  top: 0;
+  left: 0;
+  #ModalContent{
+    background-color: white;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    max-width: 1000px;
+    min-width: 300px;
+    transform: translate(-50%, -50%);
+
+  }
+}
+.spell {
+  &.chaos {
+    color: red;
+  }
+  &.neutral {
+    color: green;
+  }
+  &.law {
+    color: blue;
+  }
+  width: 50%;
+  cursor: pointer;
+}
+#StatusBar {
+  p.selected {
+    background-color: rgba(142,210,255,0.48);
+  }
+}

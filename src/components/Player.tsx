@@ -10,7 +10,7 @@ interface IProps extends IPlayer {
     selectCharacter():GameActions['SELECT_CHARACTER'] | void
 }
 
-const Player:React.FC<IProps> = ({cellSize,col,row,character,onTurn,selectCharacter,selected,name}) => {
+const Player:React.FC<IProps> = ({cellSize,col,row,playerType,onTurn,selectCharacter,selected,name}) => {
     const top = row! * cellSize;
     const left = col! * cellSize;
     useEffect(() => {
@@ -18,17 +18,17 @@ const Player:React.FC<IProps> = ({cellSize,col,row,character,onTurn,selectCharac
         let pos = 0;
         let direction = 'forward';
         const animate = setInterval(() => {
-            if(PlayerTypes[character].loop){
-                direction = pos === cellSize * PlayerTypes[character].frames ? 'backward' : direction;
+            if(PlayerTypes[playerType].loop){
+                direction = pos === cellSize * PlayerTypes[playerType].frames ? 'backward' : direction;
                 direction = pos === 0 ? 'forward' : direction;
                 pos = direction === 'forward' ? pos + 50 : pos - 50;
             }
             else {
-                pos = pos === cellSize * PlayerTypes[character].frames ? 0 : pos + 50;
+                pos = pos === cellSize * PlayerTypes[playerType].frames ? 0 : pos + 50;
             }
 
             el!.style.backgroundPositionX = pos + 'px';
-        },PlayerTypes[character].speed);
+        },PlayerTypes[playerType].speed);
         return () => clearInterval(animate)
     },[]);
     return (
@@ -38,7 +38,7 @@ const Player:React.FC<IProps> = ({cellSize,col,row,character,onTurn,selectCharac
             onClick={selectCharacter}
             id={`player-${name}`}
             style={{
-                backgroundImage: `url(${PlayerTypes[character].img})`,
+                backgroundImage: `url(${PlayerTypes[playerType].img})`,
                 top,
                 left
             }}

@@ -7,10 +7,13 @@ import {IPageStateActions} from "../actions/pageState";
 import {IBoardActions} from "../actions/board";
 import {IPlayerActions} from "../actions/player";
 import game, {IGame} from "./game";
+import {IGameActions} from "../actions/game";
 
+export const rootReducer = combineReducers({
 
+})
 
-const Store = combineReducers<IState,IPageStateActions & IBoardActions & IPlayerActions>({
+const Store = combineReducers<IState,IPageStateActions & IBoardActions & IPlayerActions & IGameActions>({
     pageState,
     board,
     players,

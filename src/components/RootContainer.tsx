@@ -14,7 +14,8 @@ import {IGame} from "../reducers/game";
 import Modal from "./Modal";
 import {closeModal} from "../actions/pageState";
 import Cursor from "./Game/Cursor";
-import {stepCursor} from "../actions/game";
+import {executeCursor, stepCursor} from "../actions/game";
+import BoardEngine from "./BoardEngine";
 
 interface IProps {
 }
@@ -31,11 +32,12 @@ interface StateToProps {
 
 interface DispatchToProps {
     closeModal: closeModal,
-    stepCursor(row:number,col:number): any
+    stepCursor(y:number,x:number): any
+    executeCursor(x:number,y:number):any
 }
 
 
-const RootComponent: React.FC<IProps & StateToProps & DispatchToProps> = ({board, players, cellSize, page, game,modalOpen,modalContent,closeModal,stepCursor}) => {
+const RootComponent: React.FC<IProps & StateToProps & DispatchToProps> = ({board, players, cellSize, page, game,modalOpen,modalContent,closeModal,stepCursor,executeCursor}) => {
     const [loaded, setLoaded] = useState(false);
     let content;
     switch (page) {
@@ -45,17 +47,30 @@ const RootComponent: React.FC<IProps & StateToProps & DispatchToProps> = ({board
         case IPages.game:
             content = (
                 <div id="board">
-                    <Board cellSize={cellSize} board={board} setLoaded={setLoaded}/>
-
-                    {loaded && <Players
-                        currentPlayer={game.playerOrder[game.currentPlayer]}
-                        playerOrder={game.playerOrder}
-                        players={players}
-                        cellSize={cellSize}
-                        roundType={game.roundType}
-                        selectedCharacter={game.selectedCharacter}
-                    />}
-                    {loaded && <Cursor stepCursor={stepCursor} cursor={game.cursor} cellSize={cellSize}/>}
+                    {/*<Board cellSize={cellSize} board={board} setLoaded={setLoaded}/>*/}
+                    <BoardEngine
+                        boardWidth={board.columns}
+                        boardHeight={board.rows}
+                        cursor={game.cursor}
+                        stepCursor={stepCursor}
+                        executeCursor={executeCursor}
+                    >
+                        <Players
+                            currentPlayer={game.currentPlayer}
+                            playerOrder={game.playerOrder!}
+                            players={players}
+                            cellSize={cellSize}
+                            selectedCharacter={game.selectedCharacter}
+                        />
+                    </BoardEngine>
+                    {/*{loaded && <Players*/}
+                    {/*    currentPlayer={game.currentPlayer}*/}
+                    {/*    playerOrder={game.playerOrder!}*/}
+                    {/*    players={players}*/}
+                    {/*    cellSize={cellSize}*/}
+                    {/*    selectedCharacter={game.selectedCharacter}*/}
+                    {/*/>}*/}
+                    {/*{loaded && <Cursor  cursor={game.cursor} cellSize={cellSize}/>}*/}
                     <StatusBar player={players} game={game}/>
                 </div>
             );
@@ -79,8 +94,4 @@ const states = (state: IState) => ({
     modalContent: state.pageState.modalContent
 });
 
-
-const actions = (dispatch: Dispatch) => ({});
-
-
-export const RootContainer = connect(states, {closeModal,stepCursor})(RootComponent);
+export const RootContainer = connect(states, {closeModal,stepCursor,executeCursor})(RootComponent);

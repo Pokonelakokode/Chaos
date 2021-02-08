@@ -28,8 +28,8 @@ const SpellBookComponent: React.FC<IProps & DispatchToProps> = ({spells, selectS
 };
 
 const states = (state: IState) => ({
-    spells: state.players.find((player, id) => id === state.game.currentPlayer)!.spells,
-    roundType: state.game.roundType
+    spells: state.game.playerOrder!.currentPlayer()[0].spells,
+    roundType: state.game.playerOrder!.getGameStatus().roundType
 });
 
 const SpellBook = connect(states, {selectSpell})(SpellBookComponent);

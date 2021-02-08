@@ -1,8 +1,7 @@
 import {Dispatch} from "./index";
 import {GetState} from "../reducers";
-import {CharacterTypes, IGame, initialGame, RoundTypes} from "../reducers/game";
-import {shuffle} from "../utils";
-import {getFromCoordinate} from "./player";
+import {CharacterTypes, ICharacterTypes, IGame, initialGame, RoundTypes} from "../reducers/game";
+import {getFromCoordinate, isPlayer, playerOrder, resetMovementPoints, stepPlayer} from "./player";
 
 export enum GameActionTypes {
     SET = 'GAME.SET',
@@ -21,15 +20,17 @@ export type GameActions = {
     }
     INIT: {
         type: typeof GameActionTypes.INIT,
-        state: IGame
+        state: IGame,
+        orderGenerator: ReturnType<typeof playerOrder>
     }
     NEXT_PLAYER: {
-        type: typeof GameActionTypes.NEXT_PLAYER
+        type: typeof GameActionTypes.NEXT_PLAYER,
+        currentPlayer: string
     }
     SELECT_CHARACTER: {
         type: typeof GameActionTypes.SELECT_CHARACTER,
-        id: number,
-        characterType: CharacterTypes
+        name: string,
+        characterType: ICharacterTypes
     }
     SELECT_SPELL: {
         type: typeof GameActionTypes.SELECT_SPELL,
@@ -37,59 +38,75 @@ export type GameActions = {
     }
     STEP_CURSOR: {
         type: typeof GameActionTypes.STEP_CURSOR,
-        col: number,
-        row: number
+        x: number,
+        y: number
     }
 }
-export type nextPlayer = () => void;
 export const nextPlayer = () => (dispatch:Dispatch,state:GetState) => {
-    dispatch({type:GameActionTypes.NEXT_PLAYER});
+    const playerOrder = state().game.playerOrder!;
+    const {currentPlayer,newRound} = playerOrder.nextPlayer();
+    if(newRound) dispatch(resetMovementPoints());
+    dispatch({
+        type:GameActionTypes.NEXT_PLAYER,
+        currentPlayer: currentPlayer.name
+    });
     dispatch(cursorToCurrentPlayer())
 };
 
 export const cursorToCurrentPlayer = () => (dispatch:Dispatch,state:GetState) => {
-    const player = state().players.find((player,id) => state().game.playerOrder[state().game.currentPlayer] === id)!;
-    dispatch({type:GameActionTypes.STEP_CURSOR,col:player.col!,row: player.row!})
+    const player = state().game.playerOrder!.currentPlayer()[0];
+    dispatch({type:GameActionTypes.STEP_CURSOR,x:player.col!,y: player.row!})
 }
+
+
 
 export const initGame = () => (dispatch:Dispatch,state:GetState) => {
     const {players} = state();
-    const playerOrder = shuffle(players.map((p,id) => id));
     dispatch({
         type: GameActionTypes.INIT,
         state: {
             ...initialGame,
             currentPlayer: 0,
             selectedCharacter: {
-                id: null,
+                name: "",
                 characterType: CharacterTypes.NULL
             },
-            playerOrder,
-            round: 1
+            playerOrder: playerOrder(state)
         }
-    })
+
+    });
+
     dispatch(cursorToCurrentPlayer())
 };
 
 export const executeCursor = () => (dispatch:Dispatch,state:GetState) => {
-    const {game:{cursor:{row,col},roundType,selectedCharacter},players} = state();
-    if(roundType === RoundTypes.MOVE){
-        if(selectedCharacter === null){
-            const char = getFromCoordinate(row,col,players);
-
+    const {game:{cursor:{x,y},selectedCharacter,playerOrder},players} = state();
+    if(playerOrder!.getGameStatus().roundType === RoundTypes.MOVE){
+        if(selectedCharacter.characterType === "NULL"){
+            const char = getFromCoordinate(x,y,players);
+            if(isPlayer(char)){
+                dispatch(selectCharacter(char!.name,'PLAYER'))
+            }
+        }
+        else {
+            dispatch(stepPlayer(x,y))
         }
     }
 }
 
 // export type stepCursor = (row: number,col: number) => GameActions['STEP_CURSOR']
-export const stepCursor  = (row:number,col:number) => (dispatch:Dispatch,state:GetState) => {
-    const board = state().board;
-    const newRow = Math.min(Math.max(state().game.cursor.row + row, 0),board.rows - 1);
-    const newCol = Math.min(Math.max(state().game.cursor.col + col, 0),board.columns - 1);
+export const stepCursor  = (y:number,x:number) => (dispatch:Dispatch,state:GetState) => {
+    const {rows,columns} = state().board;
+    let newRow = state().game.cursor.y + y;
+    newRow = newRow < 0 ? 0 : newRow > rows - 1 ? rows - 1 : newRow;
+    let newCol = state().game.cursor.x + x;
+    newCol = newCol < 0 ? 0 : newCol > columns - 1 ? columns - 1 : newCol;
+    // const newRow = Math.min(Math.max(state().game.cursor.x + x, 0),board.rows - 1);
+    // newCol = Math.min(Math.max(state().game.cursor.y + y, 0),board.columns - 1);
     dispatch({
         type: GameActionTypes.STEP_CURSOR,
-        row: newRow,
-        col: newCol
+        x: newCol,
+        y: newRow
     })
 };
 
@@ -98,11 +115,11 @@ export const stepCursor  = (row:number,col:number) => (dispatch:Dispatch,state:G
 export type selectSpell = (id: number) => GameActions['SELECT_SPELL']
 export const selectSpell:selectSpell = (id) => ({type: GameActionTypes.SELECT_SPELL,id});
 
-export type selectCharacter = (id:number,characterType:CharacterTypes) => GameActions['SELECT_CHARACTER']
+export type selectCharacter = (name:string,characterType:ICharacterTypes) => GameActions['SELECT_CHARACTER']
 
-export const selectCharacter:selectCharacter = (id,characterType) => ({
+export const selectCharacter:selectCharacter = (name,characterType) => ({
     type: GameActionTypes.SELECT_CHARACTER,
-    id,
+    name,
     characterType
 });
 

@@ -1,7 +1,7 @@
 import * as React from "react";
 import {connect} from "react-redux";
 import {IState} from "../reducers";
-import {ICharacterTypes, IPlayer, initialStats, initialPlayer} from "../reducers/players";
+import {IPlayerTypes, IPlayer, initialStats, initialPlayer} from "../reducers/players";
 import {IBoard} from "../reducers/board";
 import {addPlayer, initPlayers, removePlayer, setPlayer, shufflePlayers} from "../actions/player";
 import Players from "./Config/Players";
@@ -9,6 +9,7 @@ import { ThunkDispatch } from "redux-thunk";
 import {IActions} from "../actions";
 import {initGame} from "../actions/game";
 import {setBoard} from "../actions/board";
+import {playersValid} from "../utils";
 
 interface IProps {
     players: IPlayer[],
@@ -16,7 +17,7 @@ interface IProps {
 }
 
 interface DispatchProps {
-    addPlayer(player:IPlayer): void,
+    addPlayer: typeof addPlayer
     setPlayer(path:string[],data:any): void,
     removePlayer(index:number): void
     initPlayers(): void
@@ -32,8 +33,14 @@ interface StateProps {
 const ConfigComponent:React.FC<IProps & DispatchProps> = ({addPlayer,initPlayers,initGame,setPlayer,removePlayer,board,players,setBoard}) => {
     const _addPlayer = () => addPlayer({...initialPlayer});
     const startGame = () => {
-        initPlayers();
-        initGame();
+        if(playersValid(players,"name")){
+            initPlayers();
+            initGame();
+        }
+        else {
+            alert('All the player names have to be uniq')
+        }
+
     };
     return (
         <div id="config">

@@ -1,35 +1,33 @@
 import * as React from 'react';
-import {useEffect} from 'react';
 import {IPlayer} from '../reducers/players';
 import Player from './Player';
 import {connect} from 'react-redux';
 import {selectCharacter} from "../actions/game";
-import {CharacterTypes, IRoundType, ISelectedCharacter, RoundTypes} from "../reducers/game";
-import {stepPlayer} from "../actions/player";
+import game, {CharacterTypes, ISelectedCharacter, RoundTypes} from "../reducers/game";
+import {playerOrder, stepPlayer} from "../actions/player";
 import {setModal} from "../actions/pageState";
 
 interface IProps {
     players: IPlayer[],
     cellSize: number,
-    currentPlayer: number,
-    roundType: IRoundType,
+    currentPlayer: string,
     selectedCharacter: ISelectedCharacter,
-    playerOrder: number[],
+    playerOrder: ReturnType<typeof playerOrder>
 }
 
 interface DispatchToProps {
-    selectCharacter: selectCharacter,
+    selectCharacter: typeof selectCharacter,
     stepPlayer:stepPlayer,
     setModal: setModal
 }
 
-const PlayersComponent:React.FC<IProps & DispatchToProps> = ({players,currentPlayer,cellSize,selectCharacter,selectedCharacter,stepPlayer,playerOrder,setModal,roundType}) => {
-    const playerComp = players.reduce((acc:JSX.Element[],player,id) => {
-        if(!playerOrder.includes(id)) return acc;
-        const selected = selectedCharacter.id === id && selectedCharacter.characterType === CharacterTypes.PLAYER;
-        const onTurn = id === currentPlayer;
-        const _selectCharacter = () => onTurn && roundType === RoundTypes.MOVE ?
-            selectCharacter(id,CharacterTypes.PLAYER) :
+const PlayersComponent:React.FC<IProps & DispatchToProps> = ({players,currentPlayer,cellSize,selectCharacter,selectedCharacter,stepPlayer,playerOrder,setModal}) => {
+    const playerComp = players.reduce((acc:JSX.Element[],player) => {
+        if(player.dead) return acc;
+        const selected = selectedCharacter.name === player.name && selectedCharacter.characterType === CharacterTypes.PLAYER;
+        const onTurn = player.name === currentPlayer;
+        const _selectCharacter = () => onTurn && playerOrder.getGameStatus().roundType === RoundTypes.MOVE ?
+            selectCharacter(player.name,CharacterTypes.PLAYER) :
             setModal(<div>{Object.keys(player.stats!).map(stat => <p key={stat}>{`${stat}: ${player.stats![stat]}`}</p>)}</div>);
         acc.push(<Player selected={selected} selectCharacter={_selectCharacter} onTurn={onTurn} {...player} cellSize={cellSize} key={player.name}/>);
         return acc

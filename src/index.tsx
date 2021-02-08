@@ -1,50 +1,49 @@
-import * as React from 'react';
-import "./styles.scss";
-import {render} from 'react-dom';
-import {RootContainer} from './components/RootContainer';
-import {applyMiddleware, createStore} from 'redux';
-import Store, {IState} from "./reducers";
-import {Provider} from 'react-redux';
-import {initialPlayers} from "./reducers/players";
-import {initialPageState} from "./reducers/pageState";
+import * as React from "react";
+import {render} from "react-dom";
+import {Provider} from "react-redux";
+import {applyMiddleware, compose, createStore} from "redux";
 import thunk from "redux-thunk";
-import {initialGame} from "./reducers/game";
+import {RootContainer} from "./components/RootContainer";
+import Store, {IState} from "./reducers";
 import {initialBoard} from "./reducers/board";
+import {initialGame} from "./reducers/game";
+import {initialPageState} from "./reducers/pageState";
+import {initialPlayers} from "./reducers/players";
+import "./styles.scss";
 
-export let serverUrl = window.location.href.replace(window.location.hash, '').replace(window.location.search, '');
+export let serverUrl = window.location.href.replace(window.location.hash, "").replace(window.location.search, "");
 
-let initialState:IState = {
-    pageState: initialPageState,
-    players: initialPlayers,
+const initialState: IState = {
     board: initialBoard,
     game: initialGame,
+    pageState: initialPageState,
+    players: initialPlayers,
 };
 
-const loadCache = ():IState => {
-    const savedBoard = window.localStorage.getItem('chaos');
-    if(savedBoard){
+const loadCache = (): IState => {
+    const savedBoard = window.localStorage.getItem("chaos");
+    if (savedBoard) {
         try {
-            return JSON.parse(savedBoard)
+            return JSON.parse(savedBoard);
+        } catch (e) {
+            return initialState;
         }
-        catch (e) {
-            return initialState
-        }
-    }
-    else {
+    } else {
         return initialState;
     }
 };
-
-export const store = createStore(Store,loadCache(),applyMiddleware(thunk));
+const composeEnhancers = (window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__({ trace: true, traceLimit: 25 })
+    || compose;
+export const store = createStore(Store, loadCache(), composeEnhancers(applyMiddleware(thunk)));
 
 export const saveState = () => {
     const state = store.getState();
-    window.localStorage.setItem('chaos',JSON.stringify(state))
+    window.localStorage.setItem("chaos", JSON.stringify(state));
 };
 
 render(
     <Provider store={store}>
         <RootContainer/>
     </Provider>,
-    document.getElementById('app'),
+    document.getElementById("app"),
 );

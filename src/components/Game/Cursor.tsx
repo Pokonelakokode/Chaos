@@ -1,17 +1,17 @@
 import * as React from "react";
 import {useEffect} from "react";
 import {ICursor} from "../../reducers/game";
-import { stepCursor } from "../../actions/game";
 
 interface IProps {
     cursor: ICursor,
     cellSize: number,
-    stepCursor: typeof stepCursor
+    executeCursor(x:number,y:number): void,
+    stepCursor(x:number,y: number): void
 }
 
-const Cursor: React.FC<IProps> = ({cursor: {col,row},cellSize,stepCursor}) => {
-    const top = row! * cellSize;
-    const left = col! * cellSize;
+function Cursor({cursor: {y,x},cellSize,stepCursor,executeCursor}:IProps){
+    const top = y! * cellSize;
+    const left = x! * cellSize;
     useEffect(() => {
         const keyListener = (e:KeyboardEvent) => {
             switch (e.key) {
@@ -34,7 +34,7 @@ const Cursor: React.FC<IProps> = ({cursor: {col,row},cellSize,stepCursor}) => {
                 case 'c':
                     return stepCursor(1,1);
                 case 's':
-
+                    return executeCursor(x,y);
                 default:
                     return null
             }
@@ -51,5 +51,6 @@ const Cursor: React.FC<IProps> = ({cursor: {col,row},cellSize,stepCursor}) => {
         </div>
     )
 };
+
 
 export default Cursor

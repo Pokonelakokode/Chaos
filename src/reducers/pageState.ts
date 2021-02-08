@@ -1,44 +1,37 @@
-import {setIn} from 'immutable'
-import {IPageStateActions, PageStateActionTypes} from "../actions/pageState";
-import { Reducer } from 'redux';
-import {serverUrl} from "../index";
+import {createSlice} from "@reduxjs/toolkit";
+import {assocPath} from "ramda";
+import {PageStateActions} from "../actions/pageState";
 
 export enum IPages {
-    config = 'CONFIG',
-    game = 'GAME'
+    config = "CONFIG",
+    game = "GAME",
 }
 
-export const initialPageState:IPageState = {
-    serverUrl: serverUrl,
-    loading: true,
+export enum PageStateActionTypes {
+    SET = "SET",
+    SET_MODAL = "SET_MODAL",
+}
+
+export const initialPageState: PageState.Store = {
+    appName: "Chaos",
     cellSize: 50,
-    appName: 'Chaos',
+    loading: true,
+    modalOpen: false,
     page: IPages.config,
-    modalOpen: false
 };
 
-const pageState = (state = initialPageState,action:IPageStateActions):IPageState => {
-    switch(action.type){
-        case PageStateActionTypes.SET:
-            return setIn(state,action.path,action.data);
-        case PageStateActionTypes.SET_MODAL:
-            return {...state,modalOpen: true, modalContent: action.content};
-        default:
-            return state
-    }
-};
+const pageState = createSlice({
+    name: "pageState",
+    initialState: initialPageState,
+    reducers: {
+        [PageStateActionTypes.SET]: (state, action: PageState.Actions.SET) => {
+            return assocPath(action.payload.path, action.payload.data, state);
+        },
+        [PageStateActionTypes.SET_MODAL]: (state, action: PageState.Actions.SET_MODAL) => {
+            return {...state, modalOpen: true, modalContent: action.payload};
+        },
+    },
 
-export interface IPageState {
-    [key: string]: any,
-    serverUrl: string,
-    cellSize: number,
-    loading: boolean,
-    appName: string,
-    page: IPages,
-    modalOpen: boolean,
-    modalContent?: JSX.Element
-}
+});
 
-
-
-export default pageState
+export default pageState;

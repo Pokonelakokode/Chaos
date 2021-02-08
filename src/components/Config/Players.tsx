@@ -21,7 +21,7 @@ const Players:React.FC<IProps> = (props) => {
                 onChange={(e) => {props.setPlayer([id,'name'],e.target.value)}}
             />
             <div className="delete" onClick={() => {players.length > 2 ? props.removePlayer(id) : alert('You must have at least 2 players')}}>X</div>
-            <select value={player.character} onChange={(e) => {props.setPlayer([id,'character'],e.target.value)}}>
+            <select value={player.playerType} onChange={(e) => {props.setPlayer([id,'playerType'],e.target.value)}}>
                 {Object.keys(PlayerTypes).map(key => (
                     <option key={key} value={key}>{key}</option>
                 ))}

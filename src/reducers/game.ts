@@ -1,12 +1,13 @@
 import {GameActionTypes, IGameActions} from "../actions/game";
-import {setIn} from "immutable";
+import {createSlice} from "@reduxjs/toolkit";
+import {assocPath} from "ramda";
+
 
 export enum CharacterTypes {
     PLAYER = 'PLAYER',
     CREATURE = 'CREATURE',
-    NULL = ""
+    NULL = "NULL"
 }
-
 export type IRoundType = keyof typeof RoundTypes;
 
 export enum RoundTypes {
@@ -14,86 +15,107 @@ export enum RoundTypes {
     MOVE = "MOVE"
 }
 
-export interface ICursor {
-    row: number,
-    col: number
+export type ICursor = {
+    x: number,
+    y: number
 }
 
 export interface IGame {
-    round: number,
-    roundType: IRoundType,
-    playerOrder: number[],
     currentPlayer: number,
-    cursor: ICursor,
+    playerOrder?: number[],
+    cursor: {
+        x: number
+        y: number
+    },
     selectedSpellIndex: number | null,
     selectedCharacter: ISelectedCharacter
 }
 
 export interface ISelectedCharacter {
-    id: number | null,
+    name: string,
     characterType: CharacterTypes
 }
 
-export const initialGame:IGame = {
-    round: 0,
-    playerOrder: [],
-    roundType: RoundTypes.CAST,
+export const initialGame:Game.Store = {
     currentPlayer: 0,
+    playerOrder: [],
     cursor: {
-        col: 0,
-        row: 0
+        y: 0,
+        x: 0
     },
     selectedSpellIndex: null,
     selectedCharacter: {
-        id: null,
+        name: "",
         characterType: CharacterTypes.NULL
     }
 };
 
-const game = (state = initialGame, action:IGameActions) => {
-    switch (action.type) {
-        case GameActionTypes.SET:
-            return setIn(state,action.path,action.data);
-        case GameActionTypes.INIT:
-            return action.state;
-        case GameActionTypes.SELECT_CHARACTER:
+const game = createSlice({
+    name: 'game',
+    initialState: initialGame,
+    reducers: {
+        [GameActionTypes.SET]: (state, {payload: {path, data}}: Game.Actions.SET) => {
+            return assocPath(path, data, state);
+        },
+        [GameActionTypes.INIT]: (state, action: Game.Actions.INIT) => action.payload,
+        [GameActionTypes.SELECT_CHARACTER]: (state, {payload: {name, characterType}}: Game.Actions.SELECT_CHARACTER) => {
             return {
                 ...state,
-                selectedCharacter: {
-                    id: state.selectedCharacter.id === action.id && state.selectedCharacter.characterType === action.characterType ? null : action.id,
-                    characterType: state.selectedCharacter.id === action.id && state.selectedCharacter.characterType === action.characterType ? CharacterTypes.NULL : action.characterType,
-                }
-            };
-        case GameActionTypes.NEXT_PLAYER:
+                selectedCharacter: name === state.selectedCharacter.name && characterType === state.selectedCharacter.characterType
+                    ? {name, characterType}
+                    : {name: "", characterType: CharacterTypes.NULL}
+            }
+        },
+        [GameActionTypes.NEXT_PLAYER]: (state, action: Game.Actions.NEXT_PLAYER) => {
             return {
                 ...state,
-                currentPlayer: state.currentPlayer === state.playerOrder.length - 1 ? 0 : state.currentPlayer + 1,
-                selectedCharacter: {
-                    id: null,
-                    characterType: CharacterTypes.NULL
-                },
-                round: state.currentPlayer === state.playerOrder.length - 1 ? state.round + 1 : state.round,
-                roundType: state.currentPlayer === state.playerOrder.length - 1 ? state.roundType === "CAST" ? "MOVE" : "CAST" : state.roundType,
-                selectedSpellIndex: null
-            };
-        case GameActionTypes.SELECT_SPELL:
-            return {
-                ...state,
-                selectedSpellIndex: action.id
-            };
-        case GameActionTypes.STEP_CURSOR:
-            let row = state.cursor.row + action.row < 0 ? 0 : state.cursor.row + action.row;
-            row = state.cursor.row + action.row < 0 ? 0 : state.cursor.row + action.row;
-            return {
-                ...state,
-                cursor: {
-                    col: action.col,
-                    row: action.row
-                }
-            };
-        default:
-            return state
-    }
-};
+                currentPlayer: state.playerOrder.length - 1 > state.currentPlayer ? state.currentPlayer++ : 0
+            }
+        }
+}});
+
+// const game = (state = initialGame, action:IGameActions) => {
+//     switch (action.type) {
+//         case GameActionTypes.SET:
+//             return setIn(state,action.path,action.data);
+//         case GameActionTypes.INIT:
+//             return action.state;
+//         case GameActionTypes.SELECT_CHARACTER:
+//             return {
+//                 ...state,
+//                 selectedCharacter: {
+//                     name: state.selectedCharacter.name === action.name && state.selectedCharacter.characterType === action.characterType ? "" : action.name,
+//                     characterType: state.selectedCharacter.name === action.name && state.selectedCharacter.characterType === action.characterType ? CharacterTypes.NULL : action.characterType,
+//                 }
+//             };
+//         case GameActionTypes.NEXT_PLAYER:
+//             return {
+//                 ...state,
+//                 currentPlayer: action.currentPlayer,
+//                 selectedCharacter: {
+//                     name: "",
+//                     characterType: CharacterTypes.NULL
+//                 },
+//                 selectedSpellIndex: null
+//             };
+//         case GameActionTypes.SELECT_SPELL:
+//             return {
+//                 ...state,
+//                 selectedSpellIndex: action.id
+//             };
+//         case GameActionTypes.STEP_CURSOR:
+//             let row = state.cursor.x + action.y < 0 ? 0 : state.cursor.x + action.y;
+//             row = state.cursor.x + action.y < 0 ? 0 : state.cursor.x + action.y;
+//             return {
+//                 ...state,
+//                 cursor: {
+//                     x: action.x,
+//                     y: action.y
+//                 }
+//             };
+//         default:
+//             return state
+//     }
+// };
 
 export default game

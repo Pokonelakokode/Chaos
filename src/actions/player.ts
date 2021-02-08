@@ -6,9 +6,10 @@ import {PageStateActionTypes} from "./pageState";
 import {IPages} from "../reducers/pageState";
 import {GetState} from "../reducers";
 import {GameActionTypes} from "./game";
-import {randomKey} from "../utils";
+import {randomKey, shuffle} from "../utils";
 import any = jasmine.any;
 import {ICreature} from "../reducers/creatures";
+import {IRoundType, RoundTypes} from "../reducers/game";
 
 export enum PlayerActionTypes {
     SET = 'PLAYER.SET',
@@ -48,18 +49,18 @@ export type PlayerActions = {
     }
     STEP: {
         type: typeof PlayerActionTypes.STEP,
-        id: number,
+        name: string,
         row: number,
         col: number,
     }
     REMOVE_MOVE_POINT: {
         type: typeof PlayerActionTypes.REMOVE_MOVE_POINT,
-        id: number,
+        name: string,
         points: number
     }
 }
 
-export const resetMovementPoints = () => ({type: PlayerActionTypes.RESET_POINTS});
+export const resetMovementPoints = ():PlayerActions['RESET_POINTS'] => ({type: PlayerActionTypes.RESET_POINTS});
 
 export const createSpells = (spellNumber:number = 1):ISpellType[] => {
     let spells:ISpellType[] = [];
@@ -73,70 +74,64 @@ export const createSpells = (spellNumber:number = 1):ISpellType[] => {
 export type stepPlayer = (row:number,col:number) => any
 
 export const stepPlayer:stepPlayer = (row:number,col:number) => (dispatch:Dispatch,state:GetState) => {
-    const {board:{rows,columns},game:{selectedCharacter:{id}},players} = state();
-    if(id === null) return null;
-    const player = state().players.find((player,i) => i === id)!;
-    const [newRow,newCol] = [player!.row! + row, player!.col! + col];
-    const [existingCharacter,existingCharacterId] = getCharacterInPosition(players,newRow,newCol);
+    const {board:{rows,columns},game:{selectedCharacter:{name}},players} = state();
+    if(name === null) return null;
+    const player = state().players.find((player) => player.name === name)!;
+    const existingCharacter = getFromCoordinate(row,col,players);
     if(existingCharacter){
-        if(player.attackPoints === 0) return null;
-        if(attack(player!,existingCharacter)){
-            // @ts-ignore
-            dispatch(killPlayer(existingCharacter,existingCharacterId!));
+        if(isPlayer(existingCharacter)){
+            if(player.attackPoints === 0) return null;
+            if(attack(player!,existingCharacter)){
+                // dispatch(killPlayer(existingCharacter,existingCharacterId!));
+                dispatch({
+                    type:PlayerActionTypes.STEP,
+                    col:col,
+                    name:name,
+                    row:row
+                })
+            }
             dispatch({
-                type:PlayerActionTypes.STEP,
-                col:col,
-                id:id,
-                row:row
+                type:PlayerActionTypes.SET,
+                path:[name.toString(),'attackPoints'],
+                data: player.attackPoints - 1
             })
         }
-        dispatch({
-            type:PlayerActionTypes.SET,
-            path:[id.toString(),'attackPoints'],
-            data: player.attackPoints - 1
-        })
+
     }
     else {
-        const maxStep = Math.abs(row) > Math.abs(col) ? Math.abs(row) : Math.abs(col);
-        if(newRow < 0 || newRow > rows || newCol < 0 || newCol > columns || maxStep > player!.movementPoints!) return null;
+        const [colStep,rowStep] = [col - player.col!,row - player.row!];
+        const maxStep = Math.abs(rowStep) > Math.abs(colStep) ? Math.abs(rowStep) : Math.abs(colStep);
+        if(row < 0 || row > rows || col < 0 || col > columns || maxStep > player!.movementPoints!) return null;
         dispatch({
             type: PlayerActionTypes.REMOVE_MOVE_POINT,
-            id,
+            name,
             points: maxStep
         });
         return dispatch({
             type:PlayerActionTypes.STEP,
             col:col,
-            id:id,
+            name:name,
             row:row
         })
     }
 };
 
 const killPlayer = (player:IPlayer,playerId:number) => (dispatch:Dispatch,state: GetState) => {
-    const {game:{currentPlayer,playerOrder}} = state();
-    const playerOrderIndex = playerOrder.findIndex((pl) => pl === playerId);
-    if(playerOrderIndex < currentPlayer){
-        dispatch({
-            type: GameActionTypes.SET,
-            path: ['currentPlayer'],
-            data: currentPlayer - 1
-        })
-    }
-    dispatch({
-        type: GameActionTypes.SET,
-        path: ['playerOrder'],
-        data: playerOrder.filter(pl => pl !== playerId)
-    })
+    const playerOrder = state().game.playerOrder
+
 };
-type IFromCoordinate = [IPlayer,'PLAYER'] | [ICreature,'CREATURE'] | [null,'NULL']
+// type IFromCoordinate = [IPlayer,'PLAYER'] | [ICreature,'CREATURE'] | [null,'NULL']
+export type IFromCoordinate = IPlayer | ICreature | null
+
+export function isPlayer(obj: IFromCoordinate): obj is IPlayer {return !!(obj as IPlayer).name;}
 
 export const getFromCoordinate = (row: number,col: number,players:IPlayer[]):IFromCoordinate  => {
     return players.reduce((target:IFromCoordinate,player) => {
 
-        if(player.row === row && player.col === col) return [player,'PLAYER'];
-        return [player.creatures.find(creature => creature.col === col && creature.row === row),"CREATURE"] || target
-    },[null,"NULL"])
+        if(player.row === row && player.col === col) return player;
+        const creature = player.creatures.find(creature => creature.col === col && creature.row === row);
+        return creature ? creature : target
+    },null)
 };
 
 const attack = (attacker:IPlayer,defender:IPlayer) => {
@@ -181,8 +176,9 @@ export const createStats = ():IStats => {
     let stats:any = {combat:1,defence:1,magicResistance:1,manoeuvreRating:1};
     let index = 0;
     do {
-        let rand = Math.floor(Math.random() * 9);
+        let rand = Math.floor(Math.random() * 8);
         let p =  rand > points ? points : rand;
+        p = stats[Object.keys(stats)[index]] + p > 9 ? 9 - stats[Object.keys(stats)[index]] : p;
         stats[Object.keys(stats)[index]] += p;
         index = index === Object.keys(stats).length - 1 ? 0 : index + 1;
         points -= p;
@@ -193,6 +189,60 @@ export const createStats = ():IStats => {
 export const shufflePlayers = () => ({
     type: PlayerActionTypes.SHUFFLE
 });
+
+export function playerOrder(state: GetState) {
+    const playerOrder = shuffle(state().players.map((player,id) => id));
+    let round = 1;
+    let currentIndex = 0;
+    let newRound = true;
+    let roundType:IRoundType = "MOVE";
+    let currentPlayer = state().players[playerOrder[currentIndex]];
+    return {
+        currentPlayer: function ():[IPlayer,number] {
+            return [state().players[playerOrder[currentIndex]],currentIndex]
+        },
+        nextPlayer: function ():{round:number,currentIndex:number,currentPlayer:IPlayer,roundType: IRoundType,newRound:boolean} {
+            // if(state().players.filter(player => player.dead).length < 2) return "GAME OVER";
+            currentIndex = currentIndex - 1 === state().players.length ? 0 : currentIndex + 1;
+            [round,newRound] = currentIndex - 1 === state().players.length ? [round + 1,false] : [round,true];
+            roundType = currentIndex - 1 === state().players.length ? roundType === "MOVE" ? "CAST" : "MOVE" : roundType;
+            currentPlayer = state().players[playerOrder[currentIndex]];
+            if(currentPlayer.dead) {
+                return this.nextPlayer();
+            }
+            else {
+                return {round, currentIndex, currentPlayer,roundType,newRound}
+            }
+
+        },
+        getGameStatus: function() {return{
+            round,roundType,newRound
+        }},
+        getPlayers: function () {
+            return playerOrder.map(index => {
+                return state().players[index];
+            })
+        }
+
+    }
+}
+
+// export function playerOrder(state:GetState) {
+//     let index = 0;
+//     let newRound = false;
+//     while (true){
+//         yield [index,newRound];
+//         if(state().players.length - 1 ===  index){
+//             newRound = true;
+//             index = 0;
+//         }
+//         else {
+//             index++;
+//             newRound = false;
+//         }
+//     }
+//
+// }
 
 export const initPlayers = () => {
     return (dispatch:Dispatch,state:typeof store.getState) => {

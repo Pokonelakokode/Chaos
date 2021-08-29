@@ -1,9 +1,8 @@
 import * as React from "react";
-import { IBoard } from "../reducers/board";
 import Cell from "./Cell";
 
 interface IProps {
-    board: IBoard
+    board: Board.Store
     setLoaded(loaded:boolean):void;
     cellSize: number
 }
@@ -15,7 +14,7 @@ const Board: React.FC<IProps> = (props) => {
         props.setLoaded(true);
     },[]);
     for (let i = 1; i <= props.board.rows; i++) {
-        let row = [];
+        const row = [];
         for (let j = 1; j <= props.board.columns; j++) {
             row.push(<Cell cellSize={props.cellSize} key={j} row={i} col={j}/>)
         }

@@ -1,0 +1,7 @@
+export const SET = '@game/SET'
+export const INIT = '@game/INIT'
+export const NEXT_PLAYER = '@game/NEXT_PLAYER'
+export const SELECT_CHARACTER = '@game/SELECT_CHARACTER'
+export const SELECT_SPELL = '@game/SELECT_SPELL'
+export const STEP_CURSOR = '@game/STEP_CURSOR'
+export const SWITCH_ROUND_TYPE = '@game/SWITCH_ROUND_TYPE'

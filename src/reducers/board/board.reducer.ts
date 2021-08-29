@@ -1,10 +1,6 @@
-import {BoardActionTypes,IBoardActions} from "../actions/board";
-import { setIn } from "immutable";
-
-export interface IBoard {
-    rows: number,
-    columns: number
-}
+import {setBoard} from "./board.actions";
+import {createSlice} from "@reduxjs/toolkit";
+import {assocPath} from "ramda";
 
 export const positions = (rows:number,columns:number,playerNumber:number):{row:number,column:number}[] => {
     rows = rows - 1;
@@ -60,16 +56,30 @@ export const positions = (rows:number,columns:number,playerNumber:number):{row:n
     }
 };
 
-export const initialBoard = {
+export const initialBoard: Board.Store = {
     rows: 5,
-    columns: 7
+    columns: 7,
+    cellSize: 50
 };
 
-export const board = (state = initialBoard, action:IBoardActions):IBoard => {
-    switch (action.type){
-        case BoardActionTypes.SET:
-            return setIn(state,action.path,action.data);
-        default:
-            return state
+export const board = createSlice({
+    name: 'board',
+    initialState: initialBoard,
+    extraReducers: builder => {
+        builder.addCase(setBoard, (state, {payload: {data, path}}) => assocPath(path, data, state))
+    },
+    reducers: {
     }
-};
+})
+
+// export const board = (state = initialBoard, action:IBoardActions):IBoard => {
+//     switch (action.type){
+//         case BoardActionTypes.SET:
+//             return setIn(state,action.path,action.data);
+//         default:
+//             return state
+//     }
+// };
+
+export const boardReducer = board.reducer;
+export const boardActions = board.actions

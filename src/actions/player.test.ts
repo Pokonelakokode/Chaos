@@ -1,15 +1,7 @@
-import configureMockStore from 'redux-mock-store'
-import {createStats, PlayerActions, PlayerActionTypes, resetMovementPoints} from "./player";
-import thunk from "redux-thunk";
-import {initialPlayer, IPlayerTypes, players} from "../reducers/players";
+import {createStats, PlayerActions} from "../reducers/players/player.actions";
+import {addPlayerId, initialPlayer, IPlayerTypes, playerReducer} from "../reducers/players/players.reducer";
 import {createStore} from 'redux';
-import {positions} from "../reducers/board";
-
-test('1 + 1 equals 2',() => {
-    expect(1 + 1).toBe(2);
-})
-
-
+import {positions} from "../reducers/board/board.reducer";
 
 test('Creating Stats',() => {
     const stats = createStats();
@@ -24,7 +16,7 @@ test('Creating Stats',() => {
 });
 
 describe('Player Reducer Actions', () => {
-    const testPlayer = {
+    const testPlayer = addPlayerId({
         name: 'TEST',
         movementPoints: 1,
         dead: true,
@@ -35,52 +27,48 @@ describe('Player Reducer Actions', () => {
         row: 0,
         col: 0,
         playerType: IPlayerTypes.RED
-    }
+    });
+    const _initialPlayer = addPlayerId({...initialPlayer});
 
-    // const middlewares = [thunk];
-    // const mockPlayers = configureMockStore(middlewares);
-    let store = createStore(players,[initialPlayer]);
+    let store = createStore(playerReducer,[]);
     beforeEach(() => {
-        store = createStore(players,[initialPlayer]);
+        store = createStore(playerReducer,[_initialPlayer]);
     });
     it('CAN set',() => {
-        const action:PlayerActions['SET'] = {
-            type: PlayerActionTypes.SET,
-            path: ['0','movementPoints'],
+        // const action:playerActions['SET'] = {
+        //     type: PlayerActionTypes.SET,
+        //     path: ['0','movementPoints'],
+        //     data: 1
+        // };
+        store.dispatch(PlayerActions.setPlayer({
+            path: [0,'movementPoints'],
             data: 1
-        };
-        store.dispatch(action);
+        }));
         // expect(store.getActions()).toEqual([action]);
-        expect(store.getState()).toStrictEqual([{...initialPlayer,movementPoints: 1}])
+        expect(store.getState()).toStrictEqual([{..._initialPlayer,movementPoints: 1}])
     })
     it('should be able to ADD a Player', () => {
-        const action:PlayerActions['ADD'] = {
-            type: PlayerActionTypes.ADD,
-            player: testPlayer
-        };
-        store.dispatch(action);
-        // expect(store.getActions()).toEqual([action]);
-        expect(store.getState()).toStrictEqual([initialPlayer,testPlayer])
+        store.dispatch(PlayerActions.addPlayer({...testPlayer}));
+        expect(store.getState()).toStrictEqual([_initialPlayer,testPlayer])
     });
     it('Reset Movement Points for a Player',() => {
-        store.dispatch(resetMovementPoints());
-        expect(store.getState()).toStrictEqual([{...initialPlayer, movementPoints: 1,attackPoints: 1}]);
+        store.dispatch(PlayerActions.resetPoints());
+        expect(store.getState()).toStrictEqual([{..._initialPlayer, movementPoints: 1,attackPoints: 1}]);
     })
-    it('should be able to remove a player', function () {
-        store.dispatch({
-            type: PlayerActionTypes.REMOVE,
-            index:0
-        })
+    it('should be able to remove a player', () => {
+        store.dispatch(PlayerActions.removePlayer(store.getState()[0].id))
         expect(store.getState()).toStrictEqual([]);
     });
-    it('should be able to shuffle players', function () {
-        store = createStore(players,[initialPlayer,testPlayer,testPlayer]);
-        store.dispatch({type: PlayerActionTypes.SHUFFLE});
-        expect(store.getState()).not.toStrictEqual([initialPlayer,testPlayer,testPlayer])
+    it('should be able to shuffle players', () => {
+        store.dispatch(PlayerActions.addPlayer(testPlayer));
+        store.dispatch(PlayerActions.addPlayer(testPlayer));
+        store.dispatch(PlayerActions.shufflePlayers());
+        // expect(store.getState()).not.toStrictEqual([_initialPlayer,testPlayer,testPlayer])
+        expect(store.getState()).toEqual(expect.arrayContaining([_initialPlayer,testPlayer,testPlayer]))
     });
-    it('should be able to init players', function () {
-        store = createStore(players,[initialPlayer,testPlayer]);
-        store.dispatch({type:PlayerActionTypes.INIT_PLAYERS,positions:positions(10,10,store.getState().length)});
+    it('should be able to init players', () => {
+        store.dispatch(PlayerActions.addPlayer(testPlayer));
+        store.dispatch(PlayerActions.initPlayers(positions(10,10,store.getState().length)));
         store.getState().forEach(player => {
             expect(player.spells.length).toEqual(3);
             expect(player.spells.length).toEqual(3);
@@ -95,9 +83,11 @@ describe('Player Reducer Actions', () => {
         expect(store.getState()[1].row).toBe(4);
         expect(store.getState()[1].col).toBe(9);
     });
-    it('should be able to step player', function () {
-        store.dispatch({type: PlayerActionTypes.STEP,col:1,row:1,name:""})
-        expect(store.getState()[0]).toStrictEqual({...initialPlayer,col:1,row:1})
+    it('should be able to step player', () => {
+        store.dispatch(PlayerActions.initPlayers(positions(10,10,store.getState().length)))
+        const expected = store.getState()[0];
+        store.dispatch(PlayerActions.step({col: 1, row: 1, id: store.getState()[0].id}))
+        expect(store.getState()[0]).toStrictEqual({...expected,col:1,row:1, movementPoints: 0})
     });
 
 });

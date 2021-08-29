@@ -1,16 +1,11 @@
 import * as React from 'react';
-import {PlayerTypes, IPlayer} from "../reducers/players";
+import {PlayerTypes} from "../../../reducers/players/players.reducer";
 import {useEffect} from "react";
-import {GameActions} from "../actions/game";
+import connector, {ConnectedContainerProps} from "./Player.connector";
 
-interface IProps extends IPlayer {
-    cellSize: number
-    onTurn: boolean
-    selected: boolean
-    selectCharacter():GameActions['SELECT_CHARACTER'] | void
-}
+type Props = ConnectedContainerProps & Player.Player
 
-const Player:React.FC<IProps> = ({cellSize,col,row,playerType,onTurn,selectCharacter,selected,name}) => {
+const Player:React.FC<Props> = ({dead, id,col,row,playerType,name, cellSize, onTurn, selected, selectCharacter}) => {
     const top = row! * cellSize;
     const left = col! * cellSize;
     useEffect(() => {
@@ -31,11 +26,14 @@ const Player:React.FC<IProps> = ({cellSize,col,row,playerType,onTurn,selectChara
         },PlayerTypes[playerType].speed);
         return () => clearInterval(animate)
     },[]);
+    if (dead) {
+        return null
+    }
     return (
         <div
             className={`player${onTurn ? ' onturn' : ''}${selected ? ' selected' : ''}`}
             key={name}
-            onClick={selectCharacter}
+            onClick={() => selectCharacter({characterType: "PLAYER", id})}
             id={`player-${name}`}
             style={{
                 backgroundImage: `url(${PlayerTypes[playerType].img})`,
@@ -46,4 +44,4 @@ const Player:React.FC<IProps> = ({cellSize,col,row,playerType,onTurn,selectChara
     )
 };
 
-export default Player
+export default connector(Player)

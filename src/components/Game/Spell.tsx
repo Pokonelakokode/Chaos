@@ -1,9 +1,8 @@
 import * as React from "react";
-import {ISpellType, SpellTypes} from "../../reducers/players";
-import {selectSpell} from "../../actions/game";
+import {SpellTypes} from "../../reducers/players/player.actions";
 
 interface IProps {
-    spell: ISpellType,
+    spell: SpellType,
     selectSpell(): void
 }
 
@@ -19,9 +18,9 @@ const Spell: React.FC<IProps> = (props) => {
     )
 };
 
-const alignment = (alignment:number) => {
-    if (alignment < 0) {return 'chaos'}
-    else if (alignment === 0) { return 'neutral'}
+const alignment = (side: number) => {
+    if (side < 0) {return 'chaos'}
+    else if (side === 0) { return 'neutral'}
     else { return 'law'}
 }
 

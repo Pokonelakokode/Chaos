@@ -52,13 +52,16 @@ body {
     position: absolute;
     height: 50px;
     width: 50px;
+    transition: top, left;
+    transition-duration: 1s;
     background-repeat-y: no-repeat;
   }
   .onturn {
     background-color: rgba(86,184,255,0.49);
   }
   .selected {
-    background-color: rgba(255,21,29,0.79) !important;
+    outline: 2px solid yellow;
+    outline-offset: -2px;
   }
   #Cursor {
     position: absolute;

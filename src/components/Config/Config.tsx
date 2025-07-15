@@ -19,7 +19,7 @@ const ConfigComponent: React.FC<ConnectedContainerProps> = ({board, shufflePlaye
       <button onClick={() => addPlayer(addPlayerId({...initialPlayer}))}>
         ADD PLAYER
       </button>
-      <button onClick={shufflePlayers}>SHUFFLE</button>
+      <button onClick={() => shufflePlayers()}>SHUFFLE</button>
       <button onClick={initGame}>PLAY</button>
       <div id="BoardConfig">
         <label>Rows </label>

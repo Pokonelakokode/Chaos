@@ -1,5 +1,4 @@
 import {createAction, createSelector} from "@reduxjs/toolkit";
-import {getBoard} from "../board/board.actions";
 import * as actionTypes from './players.actionTypes';
 
 export const SpellTypes: { [key: string]: Player.Spell } = {
@@ -11,7 +10,7 @@ export const SpellTypes: { [key: string]: Player.Spell } = {
     },
 };
 
-export function randomKey<T, K>(obj: typeof SpellTypes): SpellType {
+export function randomKey(obj: typeof SpellTypes): SpellType {
     const keys = Object.keys(obj) as SpellType[];
     // tslint:disable-next-line:no-bitwise
     return keys[keys.length * Math.random() << 0];
@@ -50,11 +49,11 @@ export const getSelectedCharacter = createSelector(
   [getSelectedCharacterId,
   getSelectedCharacterType,
   getPlayers],
-  (id, type, players): Player.Player | undefined => {
+  (id, _type, players): Player.Player | undefined => {
       return players.find(player => player.id === id)
   }
 );
-export const coordParams = (state: RootState, params: {row: number, column: number}) => params;
+export const coordParams = (_state: RootState, params: {row: number, column: number}) => params;
 export const getFromCoordinate = createSelector(getPlayers,coordParams, (players, {column, row}) =>
     players.find(player => player.col === column && player.row === row && !player.dead)
 )
@@ -74,7 +73,7 @@ export const createSpells = (spellNumber:number = 1):SpellType[] => {
     return spells;
 };
 
-export const stepCharacter = (character: Player.Player, column:number, row:number): AppThunk => (dispatch , state) => {
+export const stepCharacter = (character: Player.Player, column:number, row:number): AppThunk => (dispatch , _state) => {
     // const players = getPlayers(state());
     // const {columns, rows} = getBoard(state());
     // const existingCharacter = dispatch(getFromCoordinate(row,column));

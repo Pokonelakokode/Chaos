@@ -15,7 +15,7 @@ const game = createSlice({
   name: 'game',
   initialState: initialGame,
   extraReducers: builder => {
-    builder.addCase(initGameAction, (state, action) => action.payload);
+    builder.addCase(initGameAction, (_state, action) => action.payload);
     builder.addCase(setGame, (state, action) => assocPath(action.payload.path, action.payload.data, state));
     builder.addCase(nextPlayerAction, (state, action) => {
       return {

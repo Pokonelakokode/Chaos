@@ -41,7 +41,7 @@ export const getRound = (state: RootState) => state.game.round;
 export const getRoundType = (state: RootState) => state.game.roundType;
 
 // PARAMS
-export const playerIdParam = (state: RootState, param: string) => param;
+export const playerIdParam = (_state: RootState, param: string) => param;
 export const isPlayerOnTurn = createSelector(getCurrentPlayerId, playerIdParam, (currentId, id) => currentId === id);
 export const isPlayerSelected = createSelector(getSelectedCharacter, playerIdParam, (selectedCharacter, id) =>
   selectedCharacter && selectedCharacter.id === id);

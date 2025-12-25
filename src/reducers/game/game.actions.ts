@@ -73,7 +73,7 @@ export const cursorToCurrentPlayer = (): AppThunk => (dispatch, state) => {
   const player = getCurrentPlayer(state());
   dispatch(stepCursor({x: player!.col!, y: player!.row!}))
 }
-// TODO DO THIS SHIT!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 export const initGame = (): AppThunk => (dispatch, state) => {
   const order = shuffle(getPlayerIds(state()));
   dispatch(initGameAction({
